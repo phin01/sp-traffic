@@ -5,6 +5,7 @@ from dotenv import load_dotenv, find_dotenv
 import json
 import requests
 from datetime import datetime
+from utils.logging import get_logger
 
 # Load environment variables from .env file at project root
 load_dotenv(dotenv_path=find_dotenv())
@@ -142,4 +143,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    logger = get_logger("olho_vivo.previsao_staging")
+
+    try:
+        main()
+        logger.log_run(succeeded=True)
+    except Exception as e:
+        logger.log_run(succeeded=False, error_message=str(e))
