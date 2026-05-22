@@ -1,13 +1,13 @@
 import os
 from sqlalchemy import create_engine, text
 from azure.storage.blob import BlobServiceClient
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import json
 import requests
 from datetime import datetime
 
 # Load environment variables from .env file at project root
-load_dotenv(dotenv_path="../../../.env")
+load_dotenv(dotenv_path=find_dotenv())
 
 # Configuration
 DB_USER = os.getenv('DB_USER')

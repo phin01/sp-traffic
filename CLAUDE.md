@@ -20,7 +20,7 @@ sp-traffic
 - API requests using requests library
 - Raw API returns saved as .json files in Azure Blob Storage
 - PostgreSQL as database, with sqlalchemy as ORM
-- All credentials stored in .env file, accessed with dotenv package
+- All credentials stored in .env file, accessed with dotenv package, **using find_dotenv() as location**
 - No installation of additional packages, use only packages included in requirements.txt
 
 ## Data Sources
@@ -45,6 +45,7 @@ sp-traffic
 ### PostgreSQL
 
 - All relevant credentials and connection information in .env file at root folder: DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
+- Always use parameterized queries for any inserts or updates. Always check for potential SQL injection risks
 
 ### Azure Blob Storage
 
