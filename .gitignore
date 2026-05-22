@@ -1,3 +1,9 @@
+__pycache__/
 /data
 .env
 .venv
+/sandbox
+ingestion/olho_vivo/linhas_staging
+ingestion/olho_vivo/posicao_staging
+ingestion/olho_vivo/posicao_to_bucket
+example.md
