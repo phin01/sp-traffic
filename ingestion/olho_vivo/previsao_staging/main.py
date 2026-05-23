@@ -29,9 +29,15 @@ engine = create_engine(
 
 
 def fetch_bus_lines() -> list[str]:
-    """Fetch all bus line IDs from the staging schema."""
+    """Fetch all bus line IDs from the staging schema, excluding short lines."""
 
-    query = text("SELECT DISTINCT line_id FROM staging.stg_lines ORDER BY line_id")
+    query = text(
+        "SELECT DISTINCT sl.line_id "
+        "FROM staging.stg_lines sl "
+        "LEFT JOIN staging.stg_short_lines ssl ON sl.line_id = ssl.line_id "
+        "WHERE ssl.line_id IS NULL "
+        "ORDER BY sl.line_id"
+    )
 
     with engine.connect() as conn:
         lines = conn.execute(query).fetchall()
@@ -107,8 +113,8 @@ def main():
     bus_lines = fetch_bus_lines()
     print(f"Found {len(bus_lines)} bus lines")
 
-    if len(bus_lines) != 40:
-        raise ValueError(f"Expected 40 bus lines, found {len(bus_lines)}")
+    if not bus_lines:
+        raise ValueError("No bus lines found in database")
 
     # Step 2: Authenticate with Olho Vivo API
     print("Authenticating with Olho Vivo API...")
