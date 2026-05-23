@@ -23,7 +23,7 @@ sp-traffic
 - All credentials stored in .env file, accessed with dotenv package, **using find_dotenv() as location**
 - No installation of additional packages, use only packages included in requirements.txt
 - Any test or temporary scripts should be saved to the /sandbox folder at the project root
-- Run all scripts as modules from the project root folder (ie, python -m sandbox/script.py)
+- Run all scripts **as modules** from the project root folder (ie, python -m sandbox.script.py)
 - Use relative paths when referencing other files
 
 ## Data Sources
