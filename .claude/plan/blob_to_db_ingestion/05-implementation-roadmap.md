@@ -25,10 +25,10 @@
 
 ---
 
-## Phase 2: Previsao Ingestion Script (db/stg_previsao_raw/main.py)
+## Phase 2: Previsao Ingestion Script (ingestion/db/stg_previsao_raw/main.py)
 
 ### Tasks
-1. Create new file at `db/stg_previsao_raw/main.py`
+1. Create new file at `ingestion/db/stg_previsao_raw/main.py`
 2. Implement workflow:
    - Connect to Azure storage using shared utility
    - List blobs and filter by earliest timestamp
@@ -37,19 +37,19 @@
 3. Add verification step (check row count in DB)
 
 ### Files Created/Modified
-- `db/stg_previsao_raw/main.py` (new)
+- `ingestion/db/stg_previsao_raw/main.py` (new)
 
 ---
 
-## Phase 3: Weather Ingestion Script (db/stg_weather_raw/main.py)
+## Phase 3: Weather Ingestion Script (ingestion/db/stg_weather_raw/main.py)
 
 ### Tasks
-1. Create new file at `db/stg_weather_raw/main.py`
+1. Create new file at `ingestion/db/stg_weather_raw/main.py`
 2. Implement similar workflow as previsao script but for weather data
 3. Insert into `stg_weather_raw` table
 
 ### Files Created/Modified
-- `db/stg_weather_raw/main.py` (new)
+- `ingestion/db/stg_weather_raw/main.py` (new)
 
 ---
 

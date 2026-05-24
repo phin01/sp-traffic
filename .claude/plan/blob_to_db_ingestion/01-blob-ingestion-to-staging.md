@@ -13,7 +13,7 @@ Extend `CloudStorage` class with read operations:
 - `get_blob_timestamps() -> dict[str, datetime]`: Returns blob metadata including last_modified
 - `get_blob_content(blob_name: str) -> str`: Returns blob content
 
-### 2. Ingestion Scripts (db/stg_previsao_raw/main.py, db/stg_weather_raw/main.py)
+### 2. Ingestion Scripts (ingestion/db/stg_previsao_raw/main.py, ingestion/db/stg_weather_raw/main.py)
 Each script:
 1. Lists blobs in Azure using the shared utility
 2. Filters by earliest `loaded_at` timestamp for incremental loading
