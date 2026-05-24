@@ -16,6 +16,7 @@
 2. Extend `CloudStorage` class with read methods:
    - `list_blobs_by_source(source_prefixes: list[str]) -> list[BlobInfo]`
    - `get_blob_timestamps() -> dict[str, datetime]`
+   - `get_blob_content(blob_name: str) -> str`
 
 3. Add type hints and docstrings following existing patterns
 

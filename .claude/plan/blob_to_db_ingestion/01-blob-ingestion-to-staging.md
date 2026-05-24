@@ -11,6 +11,7 @@ Schema drift is a primary concern — we want to avoid unnesting JSON in Python 
 Extend `CloudStorage` class with read operations:
 - `list_blobs_by_source(source_prefix: str) -> list[BlobInfo]`: Lists blobs matching a source prefix, filtered by earliest timestamp
 - `get_blob_timestamps() -> dict[str, datetime]`: Returns blob metadata including last_modified
+- `get_blob_content(blob_name: str) -> str`: Returns blob content
 
 ### 2. Ingestion Scripts (db/stg_previsao_raw/main.py, db/stg_weather_raw/main.py)
 Each script:
