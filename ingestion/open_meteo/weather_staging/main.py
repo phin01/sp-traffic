@@ -4,6 +4,11 @@ import os
 from collections import defaultdict
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv, find_dotenv
+from utils.logging import get_logger
+from requests import Session
+from azure.storage.blob import BlobServiceClient
+from datetime import datetime
+import json
 
 
 # Load environment variables from .env file at project root
@@ -99,6 +104,73 @@ def verify_database_connection():
         raise
 
 
+def query_open_meteo(representatives):
+    """Query Open Meteo API for precipitation probability at each grid cell.
+
+    Args:
+        representatives: List of dictionaries with keys 'cp', 'py', 'px'.
+
+    Returns:
+        Dictionary keyed by CP, containing full weather data from API response.
+    """
+    
+    session = Session()
+    weather_data = {}
+
+    for rep in representatives:
+        py, px = rep['py'], rep['px']
+
+        # Build URL following the sample format
+        url = f"https://api.open-meteo.com/v1/forecast"
+        params_str = (
+            f"latitude={py}&longitude={px}"
+            "&hourly=precipitation&current=rain,temperature_2m,"
+            "precipitation,showers,relative_humidity_2m,weather_code"
+            "&forecast_days=1"
+        )
+        full_url = f"{url}?{params_str}"
+
+        response = session.get(full_url)
+
+        if response.status_code != 200:
+            print(f"API error for cell ({py}, {px}): {response.status_code}")
+            continue
+
+        data = response.json()
+        weather_data[rep['cp']] = data
+
+    return weather_data
+
+
+def save_to_azure_blob(weather_data):
+    """Save weather data to Azure Blob Storage.
+
+    Args:
+        weather_data: Dictionary keyed by CP, containing full weather JSON.
+    """
+    
+
+    AZURE_STORAGE_KEY = os.getenv('AZURE_STORAGE_KEY')
+    AZURE_CONTAINER_NAME = os.getenv('AZURE_CONTAINER_NAME')
+
+    client = BlobServiceClient.from_connection_string(AZURE_STORAGE_KEY)
+    container_client = client.get_container_client(AZURE_CONTAINER_NAME)
+
+    # Generate filename with timestamp in ISO 8601 format
+    timestamp = datetime.utcnow().isoformat()
+    blob_name = f"openmeteo/weather/weather_{timestamp}.json"
+
+    # Upload file to container
+    blob_client = container_client.get_blob_client(blob_name)
+    blob_client.upload_blob(
+        data=json.dumps(weather_data).encode(),
+        content_type="application/json",
+        overwrite=True,
+    )
+
+    print(f"Saved weather data to Azure Blob Storage: {blob_name}")
+
+
 def main():
     """Main ingestion workflow."""
     try:
@@ -115,11 +187,17 @@ def main():
         # Step 3: Assign to grid cells and select representatives
         representatives = assign_to_grid_cells(stops)
 
-        # Display sample of first 5 representatives for verification
-        print("\nSample of grid cell representatives (first 5):")
-        for i, rep in enumerate(representatives[:5], 1):
-            cp, py, px = rep['cp'], rep['py'], rep['px']
-            print(f"  {i}. CP={cp}, Lat={py:.6f}, Lon={px:.6f}")
+        # Step 4: Query Open Meteo API for each representative
+        weather_data = query_open_meteo(representatives)
+
+        if not weather_data:
+            print("No weather data retrieved. Exiting gracefully.")
+            return
+
+        print(f"Retrieved weather data for {len(weather_data)} grid cells")
+
+        # Step 5: Save to Azure Blob Storage
+        save_to_azure_blob(weather_data)
 
     except Exception as e:
         print(f"Error during ingestion: {e}")
@@ -127,4 +205,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    logger = get_logger("open_meteo.weather_staging")
+    
+    try:
+        main()
+        logger.log_run(succeeded=True)
+    except Exception as e:
+        logger.log_run(succeeded=False, error_message=str(e))
