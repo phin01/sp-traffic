@@ -1,10 +1,8 @@
 import os
 from sqlalchemy import create_engine, text
-from azure.storage.blob import BlobServiceClient
+from utils.cloud import CloudStorage
 from dotenv import load_dotenv, find_dotenv
-import json
 import requests
-from datetime import datetime
 from utils.logging import get_logger
 
 # Load environment variables from .env file at project root
@@ -18,8 +16,6 @@ DB_PORT = int(os.getenv('DB_PORT', 5432))
 DB_NAME = os.getenv('DB_NAME')
 OLHO_VIVO_URL = os.getenv('OLHO_VIVO_URL')
 SPTRANS_TOKEN = os.getenv('SPTRANS_TOKEN')
-AZURE_STORAGE_KEY = os.getenv('AZURE_STORAGE_KEY')
-AZURE_CONTAINER_NAME = os.getenv('AZURE_CONTAINER_NAME')
 
 # Database connection
 engine = create_engine(
@@ -83,26 +79,12 @@ def fetch_bus_data(line_id: str, session: requests.Session) -> dict | None:
     return None
 
 
-def save_to_azure_blob(data: list[dict]) -> str:
+def save_to_blob(data: list[dict]) -> str:
     """Save aggregated data to Azure Blob Storage."""
 
-    # Generate filename with timestamp in ISO 8601 format
-    timestamp = datetime.utcnow().isoformat()
-    container_url = f"sptrans-olhovivo/previsao/previsao_{timestamp}.json"
-
-    # Connect to Azure storage
-    client = BlobServiceClient.from_connection_string(AZURE_STORAGE_KEY)
-    container_client = client.get_container_client(AZURE_CONTAINER_NAME)
-
-    # Upload file
-    blob_client = container_client.get_blob_client(container_url)
-    blob_client.upload_blob(
-        data=json.dumps(data, indent=2).encode(),
-        content_type="application/json",
-        overwrite=True,
-    )
-
-    return container_url
+    storage = CloudStorage()
+    blob_name = storage.generate_blob_name("sptrans-olhovivo/previsao", "previsao")
+    return storage.upload_json(data, blob_name)
 
 
 def main():
@@ -144,7 +126,7 @@ def main():
 
     # Step 4: Save to Azure Blob Storage
     print("Saving to Azure Blob Storage...")
-    storage_url = save_to_azure_blob(all_data)
+    storage_url = save_to_blob(all_data)
     print(f"Data saved to: {storage_url}")
 
 
