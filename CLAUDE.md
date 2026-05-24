@@ -19,6 +19,7 @@ sp-traffic
 - Ingestion scripts using Python
 - API requests using requests library
 - Raw API returns saved as .json files in Azure Blob Storage
+- When interacting with cloud storage, use CloudStorage class from utils folder. **Do not** write cloud-specific code directly to ingestion scripts
 - PostgreSQL as database, with sqlalchemy as ORM
 - All credentials stored in .env file, accessed with dotenv package, **using find_dotenv() as location**
 - No installation of additional packages, use only packages included in requirements.txt
