@@ -6,9 +6,7 @@ from sqlalchemy import create_engine, text
 from dotenv import load_dotenv, find_dotenv
 from utils.logging import get_logger
 from requests import Session
-from azure.storage.blob import BlobServiceClient
-from datetime import datetime
-import json
+from utils.cloud import CloudStorage
 
 
 # Load environment variables from .env file at project root
@@ -142,31 +140,16 @@ def query_open_meteo(representatives):
     return weather_data
 
 
-def save_to_azure_blob(weather_data):
+def save_to_blob(weather_data):
     """Save weather data to Azure Blob Storage.
 
     Args:
         weather_data: Dictionary keyed by CP, containing full weather JSON.
     """
-    
 
-    AZURE_STORAGE_KEY = os.getenv('AZURE_STORAGE_KEY')
-    AZURE_CONTAINER_NAME = os.getenv('AZURE_CONTAINER_NAME')
-
-    client = BlobServiceClient.from_connection_string(AZURE_STORAGE_KEY)
-    container_client = client.get_container_client(AZURE_CONTAINER_NAME)
-
-    # Generate filename with timestamp in ISO 8601 format
-    timestamp = datetime.utcnow().isoformat()
-    blob_name = f"openmeteo/weather/weather_{timestamp}.json"
-
-    # Upload file to container
-    blob_client = container_client.get_blob_client(blob_name)
-    blob_client.upload_blob(
-        data=json.dumps(weather_data).encode(),
-        content_type="application/json",
-        overwrite=True,
-    )
+    storage = CloudStorage()
+    blob_name = storage.generate_blob_name("openmeteo/weather", "weather")
+    storage.upload_json(weather_data, blob_name)
 
     print(f"Saved weather data to Azure Blob Storage: {blob_name}")
 
@@ -197,7 +180,7 @@ def main():
         print(f"Retrieved weather data for {len(weather_data)} grid cells")
 
         # Step 5: Save to Azure Blob Storage
-        save_to_azure_blob(weather_data)
+        save_to_blob(weather_data)
 
     except Exception as e:
         print(f"Error during ingestion: {e}")
