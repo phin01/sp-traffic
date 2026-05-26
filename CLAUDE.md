@@ -62,9 +62,10 @@ sp-traffic
 - [X] Create script to fetch current bus data from Olho Vivo API and store in Azure Blob Storage
 - [X] Create script to determine relevant locations to query for weather data
 - [X] Create script to fetch weather data from relevant locations and store in Azure Blob Storage
-- [ ] Create script to fetch bus data from Blob Storage and save to PostgreSQL database incrementally
-- [ ] Create script to fetch weather data from Blob Storage and save to PostgreSQL database incrementally
+- [X] Create script to fetch bus data from Blob Storage and save to PostgreSQL database incrementally
+- [X] Create script to fetch weather data from Blob Storage and save to PostgreSQL database incrementally
 - [ ] Create script to process traffic accident files and save to PostgreSQL database incrementally
+- [ ] Create dbt project for downstream data transformation
 
 
 ## Open Topics (To be included in roadmap after breakdown into smaller steps)
