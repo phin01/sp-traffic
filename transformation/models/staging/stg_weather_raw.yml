@@ -1,0 +1,62 @@
+version: 2
+
+models:
+  - name: stg_weather_raw
+    description: Unnested weather data from Open Meteo API blob storage
+    version: 1.0.0
+    columns:
+      - name: source
+        description: Blob filename (e.g., "weather_2026-05-24T14:30:00.json")
+        tests:
+          - not_null
+      - name: location_id
+        description: Bus station ID used as reference for weather data extracted
+        tests:
+          - not_null
+      - name: latitude
+        description: Latitude coordinate of the bus station in decimal degrees
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric 
+
+      - name: longitude
+        description: Longitude coordinate of the bus station in decimal degrees
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric 
+      - name: snapshot_time
+        description: Timestamp of current weather conditions
+        tests:
+          - not_null
+      - name: temperature
+        description: Current 2m temperature in Celsius
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric 
+      - name: precipitation
+        description: Current precipitation rate in mm
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric 
+      - name: rain
+        description: Current rain amount in mm
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric 
+      - name: showers
+        description: Current shower amount in mm
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric 
+      - name: relative_humidity
+        description: Current 2m relative humidity percentage
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric 
+      - name: weather_code
+        description: WMO weather code for current conditions
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric 
+    materialized: incremental
+    on_schema_change: ignore
