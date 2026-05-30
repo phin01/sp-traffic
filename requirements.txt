@@ -4,3 +4,5 @@ sqlalchemy==2.0.49
 dotenv==0.9.9
 pandas==3.0.2
 psycopg2-binary==2.9.12
+dbt-core==1.11.11
+dbt-postgres==1.10.0
