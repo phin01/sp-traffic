@@ -23,6 +23,17 @@ engine = create_engine(
     pool_pre_ping=True,
 )
 
+def get_latest_load_timestamp() -> datetime:
+    """Fetch the latest load timestamp from the staging table."""
+
+    query = text(
+        "SELECT MAX(loaded_at) FROM staging.stg_previsao_raw"
+    )
+
+    with engine.connect() as conn:
+        result = conn.execute(query).fetchone()
+        return result[0] if result[0] else datetime.min
+
 
 def main():
     """Main ingestion workflow for previsao data."""
@@ -51,17 +62,17 @@ def main():
         print("No previsao blobs found. Exiting gracefully.")
         return
 
-    # Step 4: Get earliest timestamp for incremental loading
-    earliest_timestamp = min(b.last_modified for b in blobs)
-    print(f"Earliest blob timestamp: {earliest_timestamp}")
+    # Step 4: Get latest load timestamp for incremental loading
+    latest_load_timestamp = get_latest_load_timestamp()
+    print(f"Latest load timestamp in database: {latest_load_timestamp}")
 
-    # Step 5: Fetch and insert only new blobs (after earliest timestamp)
+    # Step 5: Fetch and insert only new blobs (after latest load timestamp)
     inserted_count = 0
     skipped_count = 0
     errors = []
 
     for blob in blobs:
-        if blob.last_modified >= earliest_timestamp:
+        if blob.last_modified >= latest_load_timestamp:
             try:
                 print(f"\nProcessing blob: {blob.name}")
 
