@@ -1,7 +1,7 @@
 {{
     config(
         materialized='incremental',
-        unique_key='location_id'
+        unique_key=['location_id', 'source']
     )
 }}
 
