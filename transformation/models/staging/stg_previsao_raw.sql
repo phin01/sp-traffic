@@ -15,6 +15,7 @@ WITH raw_data AS (
 
 select
     r.source,
+    substring(r.source from '(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})')::timestamp as blob_timestamp,
     
     -- Level 1: Root Array Attributes
     (root.value ->> 'line_id')::varchar as line_id,
@@ -29,7 +30,7 @@ select
     -- Level 3: Deeply Nested 'vs' (Vehicles) Attributes
     (vs.value ->> 'p')::varchar as vehicle_id,
     (vs.value ->> 't')::varchar as prediction_time,
-    (vs.value ->> 'ta')::timestamp as snapshot_time,
+    (vs.value ->> 'ta')::timestamp as snapshot_timestamp,
     (vs.value ->> 'px')::numeric as vehicle_longitude,
     (vs.value ->> 'py')::numeric as vehicle_latitude,
     (vs.value ->> 'a')::boolean as is_accessible,

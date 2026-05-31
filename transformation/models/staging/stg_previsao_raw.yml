@@ -11,6 +11,11 @@ models:
         tests:
           - not_null
 
+      - name: blob_timestamp
+        description: Timestamp extracted from blob filename indicating when the prediction data was generated
+        tests:
+          - not_null
+
       - name: line_id
         description: Bus route identifier extracted from prediction data
 
@@ -49,7 +54,7 @@ models:
         data_tests:
           - not_null
 
-      - name: snapshot_time
+      - name: snapshot_timestamp
         description: Timestamp when the prediction was captured in ISO format (YYYY-MM-DD HH:MM:SS)
         tests:
           - not_null
