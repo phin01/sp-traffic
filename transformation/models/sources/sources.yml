@@ -1,0 +1,43 @@
+version: 2
+
+sources:
+  - name: sptraffic-blobs
+    database: sptraffic
+    schema: staging
+    tables: 
+      - name: stg_weather_raw
+        freshness:
+          warn_after: {count: 5, period: day}
+          error_after: {count: 15, period: day}
+        loaded_at_field: loaded_at
+        config:
+          event_time: loaded_at
+
+        columns:
+          - name: source
+            tests:
+              - not_null
+          - name: data
+            tests:
+              - not_null
+          - name: loaded_at
+            tests:
+              - not_null
+      - name: stg_previsao_raw
+        freshness:
+          warn_after: {count: 5, period: day}
+          error_after: {count: 15, period: day}
+        loaded_at_field: loaded_at
+        config:
+          event_time: loaded_at
+
+        columns:
+          - name: source
+            tests:
+              - not_null
+          - name: data
+            tests:
+              - not_null
+          - name: loaded_at
+            tests:
+              - not_null

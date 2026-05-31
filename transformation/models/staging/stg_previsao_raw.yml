@@ -1,0 +1,75 @@
+version: 2
+
+models:
+  - name: stg_previsao_raw
+    description: Unnested bus route prediction data from SPTrans Olho Vivo API blob storage
+    version: 1.0.0
+
+    columns:
+      - name: source
+        description: Blob filename (e.g., "previsao_2026-05-30T08:00:00.json")
+        tests:
+          - not_null
+
+      - name: line_id
+        description: Bus route identifier extracted from prediction data
+
+      - name: snapshot_hour
+        description: Time of the prediction data in HH:MM format
+        data_tests:
+          - not_null
+
+      - name: stop_id
+        description: Bus stop identifier extracted from prediction data
+        data_tests:
+          - not_null
+
+      - name: stop_name
+        description: Name of the bus stop in Portuguese
+
+      - name: stop_longitude
+        description: Longitude coordinate of the bus stop
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric
+
+      - name: stop_latitude
+        description: Latitude coordinate of the bus stop
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric
+
+      - name: vehicle_id
+        description: Bus identifier extracted from prediction data
+        data_tests:
+          - not_null
+
+      - name: prediction_time
+        description: Scheduled arrival time of the bus in HH:MM format
+        data_tests:
+          - not_null
+
+      - name: snapshot_time
+        description: Timestamp when the prediction was captured in ISO format (YYYY-MM-DD HH:MM:SS)
+        tests:
+          - not_null
+
+      - name: vehicle_longitude
+        description: Longitude coordinate of the bus at time of prediction
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric
+
+      - name: vehicle_latitude
+        description: Latitude coordinate of the bus at time of prediction
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric
+
+      - name: is_accessible
+        description: Boolean indicating if the bus is accessible (wheelchair access)
+        data_tests:
+          - not_null
+
+    materialized: incremental
+    on_schema_change: ignore
