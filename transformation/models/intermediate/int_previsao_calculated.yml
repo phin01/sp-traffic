@@ -1,0 +1,87 @@
+version: 2
+
+models:
+  - name: int_previsao_calculated
+    description: |
+      Intermediate model that calculates minutes_until_arrival from bus predictions.
+
+      **Prediction timestamp logic:**
+      - Calculates two separate UTC timestamps for blob and snapshot data using {{ get_same_day_prediction_utc() }} macro
+      - Applies day boundary adjustments using {{ get_prediction_timestamp_utc() }} macro to handle overnight cases:
+        * Snapshot at 23:55 with ETA at 00:05 → prediction belongs to next day
+      - Calculates ETA in minutes for both blob and snapshot timestamps using {{ get_time_difference_in_minutes() }} macro
+      - Final minutes_until_arrival uses blob calculation when positive, falls back to snapshot when negative (handles delayed snapshots)
+    version: 1.0.0
+
+    columns:
+      - name: source
+        description: Blob filename (e.g., "previsao_2026-05-30T08:00:00.json")
+
+      - name: blob_timestamp
+        description: Timestamp of the prediction data blob in ISO format (YYYY-MM-DD HH:MM:SS)
+
+      - name: line_id
+        description: Bus route identifier extracted from prediction data
+
+      - name: snapshot_hour
+        description: Time of the prediction data in HH:MM format
+
+      - name: stop_id
+        description: Bus stop identifier extracted from prediction data
+
+      - name: stop_name
+        description: Name of the bus stop in Portuguese
+
+      - name: stop_longitude
+        description: Longitude coordinate of the bus stop
+
+      - name: stop_latitude
+        description: Latitude coordinate of the bus stop
+
+      - name: vehicle_id
+        description: Bus identifier extracted from prediction data
+
+      - name: prediction_time
+        description: Scheduled arrival time of the bus in HH:MM format
+
+      - name: snapshot_timestamp
+        description: Timestamp when the prediction was captured in ISO format (YYYY-MM-DD HH:MM:SS)
+
+      - name: vehicle_longitude
+        description: Longitude coordinate of the bus at time of prediction
+
+      - name: vehicle_latitude
+        description: Latitude coordinate of the bus at time of prediction
+
+      - name: is_accessible
+        description: Boolean indicating if the bus is accessible (wheelchair access)
+
+      - name: loaded_at
+        description: Timestamp when the data was loaded into staging table
+
+      - name: blob_same_day_prediction_utc
+        description: Blob timestamp converted to UTC, assuming same day as snapshot before adjustment
+
+      - name: snapshot_same_day_prediction_utc
+        description: Snapshot timestamp converted to UTC, assuming same day as prediction before adjustment
+
+      - name: blob_prediction_timestamp_utc
+        description: Final adjusted blob prediction timestamp in UTC after handling overnight cases
+
+      - name: snapshot_prediction_timestamp_utc
+        description: Final adjusted snapshot prediction timestamp in UTC after handling overnight cases
+
+      - name: blob_minutes_until_arrival
+        description: Minutes from blob_timestamp to blob_prediction_timestamp_utc
+
+      - name: snapshot_minutes_until_arrival
+        description: Minutes from snapshot_timestamp to snapshot_prediction_timestamp_utc
+
+      - name: minutes_until_arrival
+        description: Final ETA in minutes; uses blob calculation when positive, falls back to snapshot for delayed snapshots (negative values)
+        data_tests:
+        - not_null
+        - dbt_expectations.expect_column_values_to_be_of_type:
+            column_type: numeric
+        - dbt_utils.expression_is_true:
+            expression: ">= 0 and minutes_until_arrival < 720"
