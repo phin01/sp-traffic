@@ -6,10 +6,10 @@ models:
       Intermediate model that calculates minutes_until_arrival from bus predictions.
 
       **Prediction timestamp logic:**
-      - Calculates two separate UTC timestamps for blob and snapshot data using {{ get_same_day_prediction_utc() }} macro
-      - Applies day boundary adjustments using {{ get_prediction_timestamp_utc() }} macro to handle overnight cases:
+      - Calculates two separate UTC timestamps for blob and snapshot data using `get_same_day_prediction_utc` macro
+      - Applies day boundary adjustments using `get_prediction_timestamp_utc` macro to handle overnight cases:
         * Snapshot at 23:55 with ETA at 00:05 → prediction belongs to next day
-      - Calculates ETA in minutes for both blob and snapshot timestamps using {{ get_time_difference_in_minutes() }} macro
+      - Calculates ETA in minutes for both blob and snapshot timestamps using `get_time_difference_in_minutes` macro
       - Final minutes_until_arrival uses blob calculation when positive, falls back to snapshot when negative (handles delayed snapshots)
     version: 1.0.0
 
