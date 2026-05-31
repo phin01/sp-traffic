@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy import create_engine, text
 from dotenv import load_dotenv, find_dotenv
 from utils.cloud import CloudStorage, BlobInfo
+from utils.logging import get_logger
 
 
 # Load environment variables from .env file at project root
@@ -126,9 +127,12 @@ def main():
 
 
 if __name__ == "__main__":
+    logger = get_logger("db.stg_previsao_raw")
     try:
         main()
         print("\nIngestion completed successfully!")
+        logger.log_run(succeeded=True)
     except Exception as e:
         print(f"\nIngestion failed: {e}")
+        logger.log_run(succeeded=False, error_message=str(e))
         raise
