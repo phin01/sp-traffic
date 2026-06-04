@@ -1,4 +1,7 @@
-{{ config(materialized='table') }}
+{{ config(
+    materialized='table',
+    tags=['fct', 'previsao']
+) }}
 
 with raw_data as (
 
