@@ -71,17 +71,14 @@ models:
       - name: snapshot_prediction_timestamp_utc
         description: Final adjusted snapshot prediction timestamp in UTC after handling overnight cases
 
-      - name: blob_minutes_until_arrival
-        description: Minutes from blob_timestamp to blob_prediction_timestamp_utc
-
-      - name: snapshot_minutes_until_arrival
-        description: Minutes from snapshot_timestamp to snapshot_prediction_timestamp_utc
-
       - name: minutes_until_arrival
-        description: Final ETA in minutes; uses blob calculation when positive, falls back to snapshot for delayed snapshots (negative values)
+        description: Final ETA in minutes; uses blob calculation when positive, falls back to snapshot for delayed snapshots (negative values). See ADR-0004.
         data_tests:
         - not_null
         - dbt_expectations.expect_column_values_to_be_of_type:
             column_type: numeric
         - dbt_utils.expression_is_true:
             expression: ">= 0 and minutes_until_arrival < 720"
+
+    config:
+      materialized: table

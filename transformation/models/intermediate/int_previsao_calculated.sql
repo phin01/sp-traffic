@@ -1,3 +1,5 @@
+{{ config(materialized='table') }}
+
 with raw_data as (
 
     select 
@@ -17,6 +19,7 @@ with raw_data as (
         is_accessible,
         loaded_at
     from {{ ref('stg_previsao_raw') }}
+    where line_id is not null
 ),
 
 base_timestamps as (
@@ -57,7 +60,25 @@ from adjusted_timestamps
 )
 
 select 
-    *,
+    source,
+    blob_timestamp,
+    line_id,
+    snapshot_hour,
+    stop_id,
+    stop_name,
+    stop_longitude,
+    stop_latitude,
+    vehicle_id,
+    prediction_time,
+    snapshot_timestamp,
+    vehicle_longitude,
+    vehicle_latitude,
+    is_accessible,
+    loaded_at,
+    blob_same_day_prediction_utc,
+    snapshot_same_day_prediction_utc,
+    blob_prediction_timestamp_utc,
+    snapshot_prediction_timestamp_utc,
     case 
         when blob_minutes_until_arrival < 0 then snapshot_minutes_until_arrival
         else blob_minutes_until_arrival
