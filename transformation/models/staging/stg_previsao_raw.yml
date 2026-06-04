@@ -76,5 +76,10 @@ models:
         data_tests:
           - not_null
 
+      - name: loaded_at
+        description: Timestamp when the data was loaded into staging table
+        tests:
+          - not_null
+
     materialized: incremental
     on_schema_change: ignore
