@@ -11,7 +11,11 @@ models:
           - not_null
       
       - name: location_id
-        description: Bus station ID used as reference for weather data extracted
+        description: |
+          Bus stop `cp` (id) chosen as the representative location for the
+          weather query. One stop per grid cell is picked and its
+          coordinates are sent to Open-Meteo; this column stores that
+          stop's id, not a grid_key. See CONTEXT.md "Grid Cell".
         tests:
           - not_null
       
