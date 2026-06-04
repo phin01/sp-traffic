@@ -14,6 +14,7 @@
 - **Relative paths**: When referencing files (data, configs), use paths relative to the project root.
 - **Sandbox**: Any test/exploratory script goes in `/sandbox`. Name it descriptively.
 - **No new packages**: Only packages in `requirements.txt` are allowed.
+- **GitHub CLI**: not on PATH. Invoke via `& "C:\Program Files\GitHub CLI\gh.exe"` (or add to PATH in a future setup).
 
 ## Architecture in one line
 Olho Vivo/Open Meteo APIs → Python ingestion → JSON blobs in Azure → PostgreSQL staging tables → dbt transformation (WIP).
