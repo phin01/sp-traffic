@@ -137,6 +137,13 @@ SP-Traffic analyzes how weather conditions and traffic accidents impact bus rout
   is UTC. See ADR-0002.
 - **`source` is the snapshot identifier** everywhere — it is the blob
   filename for both Olho Vivo and Open-Meteo data.
+- **`line_id` is consistently `varchar` (or `text`) across every
+  table** that stores it — `staging.stg_lines`, `staging.stg_short_lines`,
+  `staging.stg_bus_stops`, `staging.stg_line_vehicles`,
+  `stg.stg_previsao_raw`, `int.int_previsao_calculated`,
+  `int.int_line_stops`, `int.int_eta_to_end_of_route`. SPTrans returns
+  line codes as strings; legacy `bigint` columns were aligned in
+  2026-06-04 so that joins across tables never need an explicit cast.
 - **dbt schemas**: staging models land in `stg.`, intermediate models land
   in `int.` (configured in `transformation/dbt_project.yml` and
   `transformation/macros/generate_schema_name.sql`).
