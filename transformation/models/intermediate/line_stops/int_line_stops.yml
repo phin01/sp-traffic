@@ -1,0 +1,77 @@
+version: 2
+
+models:
+  - name: int_line_stops
+    description: |
+      Canonical ordered list of bus stops per directional bus line, derived from
+      sequential ETAs observed in vehicle snapshots.
+
+      **Method (pairwise voting):**
+      - For each `(source, line_id, vehicle_id)` snapshot, generate
+        `(predecessor_stop, successor_stop)` pairs where the predecessor has a
+        lower `minutes_until_arrival` than the successor.
+      - Aggregate pair counts across all snapshots.
+      - For each stop, compute `forward_score = times_before / (times_before + times_after)`.
+      - Rank stops within each `line_id` by descending `forward_score` (stops that
+        consistently appear before others = earlier in the route).
+
+      Assumes `line_id` is directional (A->B and B->A are distinct codes).
+    version: 1.0.0
+
+    columns:
+      - name: line_id
+        description: Directional bus route identifier from SPTrans
+        data_tests:
+          - not_null
+
+      - name: stop_order
+        description: 1-based position of the stop within the line (1 = first stop)
+        data_tests:
+          - not_null
+
+      - name: stop_id
+        description: Bus stop identifier
+        data_tests:
+          - not_null
+
+      - name: stop_name
+        description: Name of the bus stop in Portuguese
+
+      - name: stop_longitude
+        description: Average longitude across observations of this stop on this line
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric
+
+      - name: stop_latitude
+        description: Average latitude across observations of this stop on this line
+        data_tests:
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: numeric
+
+      - name: forward_score
+        description: |
+          Fraction of pairwise comparisons in which this stop preceded another stop
+          on the same line. Range [0, 1]; higher = earlier in route.
+        data_tests:
+          - dbt_utils.expression_is_true:
+              expression: ">= 0 and forward_score <= 1"
+
+      - name: times_before
+        description: Total count of pairwise observations where this stop preceded another
+
+      - name: times_after
+        description: Total count of pairwise observations where this stop followed another
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - line_id
+            - stop_order
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - line_id
+            - stop_id
+
+    config:
+      materialized: table

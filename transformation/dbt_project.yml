@@ -36,3 +36,7 @@ models:
       +materialized: table
       +schema: stg
       +tags: ['raw', 'stg']
+    intermediate:
+      +materialized: view
+      +schema: int
+      +tags: ['int']
