@@ -41,3 +41,11 @@ sources:
           - name: loaded_at
             tests:
               - not_null
+      - name: stg_short_lines
+        columns:
+          - name: line_id
+            tests:
+              - not_null
+          - name: bus_stops
+            tests:
+              - not_null

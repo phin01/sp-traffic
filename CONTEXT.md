@@ -73,6 +73,47 @@ SP-Traffic analyzes how weather conditions and traffic accidents impact bus rout
 - Range: must satisfy `0 <= minutes_until_arrival < 720` (12 h cap from
   ADR-0003).
 
+**Next Stop (`próxima parada`)**
+- Definition: The stop on a `line_id` with the smallest positive
+  `minutes_until_arrival` in a given `(source, vehicle_id)` snapshot.
+  The bus's current target. An `eta = 0` row means the bus is currently
+  at that stop and is *not* used as the next stop — the smallest
+  positive ETA is, so the in-progress segment stays out of downstream
+  metrics.
+- Storage: `int_eta_to_end_of_route.next_stop_*` columns.
+- See ADR-0005.
+
+**Final Stop (`parada final`)**
+- Definition: The terminal stop of a directional `line_id` — the stop
+  with `max(stop_order)` per `line_id` in `int_line_stops`.
+- Storage: `int_eta_to_end_of_route.final_stop_*` columns.
+
+**Segments Remaining (`segmentos restantes`)**
+- Definition: Number of full segments a bus still has to traverse to
+  reach the final stop. Equals `final_stop_order - next_stop_order` in
+  `int_eta_to_end_of_route`. Always `>= 1` after the model's filters
+  (buses at the terminal are excluded).
+- Storage: `int_eta_to_end_of_route.segments_remaining`.
+
+**ETA to End of Route (`eta_to_end`)**
+- Definition: Minutes remaining for a bus to traverse the **full
+  remaining segments** to the terminal stop. Computed as
+  `final_stop_eta - next_stop_eta`; the in-progress segment
+  (current position → next stop) is intentionally excluded so that
+  observations are comparable across vehicles at different points in
+  the route.
+- Storage: `int_eta_to_end_of_route.eta_to_end`.
+- See ADR-0005.
+
+**ETA per Segment (`eta_per_segment`)**
+- Definition: Normalised "speed" metric: `eta_to_end / segments_remaining`.
+  Minutes per full segment, independent of the bus's position in the
+  route. This is the headline metric for downstream
+  "how slow is this route right now?" questions; comparable across
+  vehicles, lines, hours, and external conditions.
+- Storage: `int_eta_to_end_of_route.eta_per_segment`.
+- See ADR-0005.
+
 **Grid Cell (`célula`)**
 - Definition: Spatial bucket used to cluster bus stops for weather queries
 - Size: 0.025° × 0.025° (approximately 8 km², ~3.5 km radius)

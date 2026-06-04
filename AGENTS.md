@@ -14,6 +14,7 @@
 - **Relative paths**: When referencing files (data, configs), use paths relative to the project root.
 - **Sandbox**: Any test/exploratory script goes in `/sandbox`. Name it descriptively.
 - **No new packages**: Only packages in `requirements.txt` are allowed.
+- **GitHub CLI**: not on PATH. Invoke via `& "C:\Program Files\GitHub CLI\gh.exe"` (or add to PATH in a future setup).
 
 ## Architecture in one line
 Olho Vivo/Open Meteo APIs → Python ingestion → JSON blobs in Azure → PostgreSQL staging tables → dbt transformation (WIP).
@@ -29,3 +30,18 @@ Olho Vivo/Open Meteo APIs → Python ingestion → JSON blobs in Azure → Postg
 - Weather queries are grid‑based: stops are grouped into ~64 cells (0.025°) to reduce API calls. See `CONTEXT.md` for grid dimensions.
 - The logger (`utils.logging.get_logger`) writes run metadata to `logging.script_runs`; don’t instantiate your own DB connection for logging.
 - Raw API responses are stored as‑is in Azure; transformations happen later in dbt.
+
+## Database tools (`utils/db/`)
+Standalone diagnostic scripts for the warehouse. Run from project root with `python -m utils.db.<script>`.
+
+- **`utils.db.check_dbt_state`** — prints row counts of dbt-managed tables, source freshness (`stg_previsao_raw.max(loaded_at)`), active queries (other than self), and any locks held on `int.*` tables. Use to diagnose why a `dbt run` is hanging.
+- **`utils.db.kill_zombies`** — terminates every non-idle PostgreSQL backend on the current database. Use when a previous `dbt run` was killed mid-flight and left zombie sessions holding `AccessShareLock`s that block the next run's `CREATE TABLE AS SELECT`. Typical symptom: dbt log frozen at "Opening a new connection, currently in state init" for minutes, while `check_dbt_state` shows old `state=active` rows waiting on `Lock/transactionid`. Does not filter by `application_name` — do not run against a shared warehouse.
+
+## dbt test for new stops
+`transformation/tests/assert_int_line_stops_covers_previsao_stops.sql` fails whenever a `(line_id, stop_id)` appears in `int_previsao_calculated` that `int_line_stops` doesn't know about. A failure means a new stop or line is in the SPTrans API output and the pairwise-voting model needs a full refresh:
+
+```
+dbt run --select int_line_stops --full-refresh
+```
+
+This is the trigger for rebuilding `int_line_stops` — keep it as a `materialized='table'` (full rebuild only on detected drift, not on every dbt run).

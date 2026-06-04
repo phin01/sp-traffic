@@ -1,0 +1,140 @@
+version: 2
+
+models:
+  - name: int_eta_to_end_of_route
+    description: |
+      Per-vehicle-per-snapshot metric describing the time needed to traverse
+      the **full remaining segments** to the line's terminal stop, derived by
+      subtracting the ETA of the next stop from the ETA of the final stop.
+
+      **Why "remaining full segments" only**
+      A bus's current position is somewhere along a segment; using the raw
+      `minutes_until_arrival` to the final stop would mix partial and full
+      segments across observations. By subtracting the ETA to the *next* stop,
+      we strip off the in-progress segment and measure only fully-quantised
+      segment traversal. The result is comparable across vehicles that are at
+      different points in the route.
+
+      **Construction**
+      - `next_stop` = the stop on the line with the smallest positive
+        `minutes_until_arrival` in the snapshot (i.e. the bus's next target).
+        Uses `int_line_stops.stop_order` to know the bus's position.
+      - `final_stop` = the terminal stop of the line (max `stop_order`).
+      - `segments_remaining = final_stop_order - next_stop_order`
+      - `eta_to_end = final_stop_eta - next_stop_eta`
+      - `eta_per_segment = eta_to_end / segments_remaining` (the headline
+        metric: minutes per full segment, independent of how far the bus has
+        yet to travel).
+
+      **Exclusions**
+      - `minutes_until_arrival = 0` is not used for `next_stop` (a 0-ETA means
+        the bus is currently at that stop; the *next* target is the smallest
+        positive ETA, which keeps the partial segment out of the metric).
+      - Snapshots where `final_stop_eta <= next_stop_eta` or
+        `final_stop_order <= next_stop_order` are dropped — these represent
+        buses already at or past the terminal, where the metric is undefined.
+
+      See ADR-0005 for the rationale and considered alternatives.
+    version: 1.0.0
+
+    columns:
+      - name: source
+        description: Blob filename; the snapshot primary key.
+        data_tests:
+          - not_null
+
+      - name: line_id
+        description: Directional bus route identifier from SPTrans.
+        data_tests:
+          - not_null
+
+      - name: vehicle_id
+        description: Bus identifier from SPTrans (`p` field in Olho Vivo).
+        data_tests:
+          - not_null
+
+      - name: blob_timestamp
+        description: UTC timestamp when the ingestion script wrote the blob.
+        data_tests:
+          - not_null
+
+      - name: snapshot_timestamp
+        description: UTC timestamp of the vehicle's GPS fix (`ta` field). Can
+          lag blob_timestamp when on-board comms delay.
+        data_tests:
+          - not_null
+
+      - name: segments_remaining
+        description: |
+          Number of full segments still to traverse. Equals
+          `final_stop_order - next_stop_order`; always >= 1 after filters.
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 1"
+
+      - name: eta_to_end
+        description: |
+          Minutes from the bus's next stop to the terminal stop, in minutes.
+          Always represents full segments only — the in-progress segment
+          (current position to `next_stop`) is excluded.
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      - name: eta_per_segment
+        description: |
+          Headline metric: `eta_to_end / segments_remaining`. Minutes per
+          full segment, normalised so observations from vehicles at any point
+          in the route are directly comparable.
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      - name: next_stop_id
+        description: Bus stop code of the bus's next target.
+        data_tests:
+          - not_null
+
+      - name: next_stop_order
+        description: 1-based position of the next stop within the line.
+        data_tests:
+          - not_null
+
+      - name: next_stop_name
+        description: Name of the next stop in Portuguese.
+
+      - name: next_stop_eta
+        description: Minutes until arrival at the next stop (the smallest
+          positive `minutes_until_arrival` in the snapshot).
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+      - name: final_stop_id
+        description: Bus stop code of the line's terminal stop.
+        data_tests:
+          - not_null
+
+      - name: final_stop_order
+        description: 1-based position of the terminal stop (== `max(stop_order)`
+          on the line).
+        data_tests:
+          - not_null
+
+      - name: final_stop_name
+        description: Name of the terminal stop in Portuguese.
+
+      - name: final_stop_eta
+        description: Minutes until arrival at the terminal stop, per the
+          snapshot's prediction.
+        data_tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: "> 0"
+
+    config:
+      materialized: table
