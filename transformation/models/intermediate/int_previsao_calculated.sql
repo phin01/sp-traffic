@@ -1,11 +1,14 @@
 {{ config(
-    materialized='table',
+    materialized='incremental',
+    unique_key=['source', 'line_id', 'stop_id', 'vehicle_id', 'prediction_time'],
+    incremental_strategy='merge',
+    on_schema_change='append_new_columns',
     tags=['fct', 'previsao']
 ) }}
 
 with raw_data as (
 
-    select 
+    select
         source,
         blob_timestamp,
         line_id,
@@ -23,6 +26,10 @@ with raw_data as (
         loaded_at
     from {{ ref('stg_previsao_raw') }}
     where line_id is not null
+      and line_id not in (select line_id from {{ source('sptraffic-blobs', 'stg_short_lines') }})
+    {% if is_incremental() %}
+      and loaded_at > (select max(loaded_at) from {{ this }})
+    {% endif %}
 ),
 
 base_timestamps as (
